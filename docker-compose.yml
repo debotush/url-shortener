@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  url_shortener_db:
+    hostname: postgres
+    image: postgres:14-alpine
+    ports:
+      - "54321:5432"
+    volumes:
+      - url_shortener_db:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: url_shortener
+      POSTGRES_PASSWORD: r00t
+    networks:
+      - url_shortener_network
+    restart: unless-stopped
+
+  url_shortener_service:
+    container_name: url_shortener_service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/go/src/url_shortener_service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - url_shortener_db
+    networks:
+      - url_shortener_network
+    links:
+      - url_shortener_db
+    environment:
+      GOPATH: /go/
+    restart: on-failure
+    tty: true
+
+
+networks:
+  url_shortener_network:
+    driver: bridge
+
+volumes:
+  url_shortener_db:
